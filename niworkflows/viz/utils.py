@@ -480,15 +480,16 @@ def transform_to_2d(data, max_axis):
 
     # take the values where the absolute value of the projection
     # is the highest
-    maximum_intensity_data = data[inds]
+    maximum_intensity_data = data[tuple(inds)]
 
     return np.rot90(maximum_intensity_data)
 
 
-def plot_melodic_components(melodic_dir, in_file, tr=None,
-                            out_file='melodic_reportlet.svg',
-                            compress='auto', report_mask=None,
-                            noise_components_file=None):
+def plot_components(ts_file, ft_file, stats_file, weights_file, in_file,
+                    tr=None,
+                    out_file='melodic_reportlet.svg',
+                    compress='auto', report_mask=None,
+                    comp_dict=None):
     from nilearn.image import index_img, iter_img
     import nibabel as nb
     import numpy as np
@@ -530,9 +531,12 @@ def plot_melodic_components(melodic_dir, in_file, tr=None,
     for j in range(3):
         mask_sl.append(transform_to_2d(mask_img.get_data(), j))
 
-    timeseries = np.loadtxt(os.path.join(melodic_dir, "melodic_mix"))
-    power = np.loadtxt(os.path.join(melodic_dir, "melodic_FTmix"))
-    stats = np.loadtxt(os.path.join(melodic_dir, "melodic_ICstats"))
+    timeseries = np.loadtxt(ts_file)
+    if ft_file:
+        power = np.loadtxt(ft_file)
+    else:
+        power = np.real(np.fft.fft(timeseries, axis=0))
+    stats = np.loadtxt(stats_file)
     n_components = stats.shape[0]
     Fs = 1.0 / tr
     Ny = Fs / 2
@@ -544,14 +548,7 @@ def plot_melodic_components(melodic_dir, in_file, tr=None,
                   width_ratios=[1, 1, 1, 4, 0.001, 1, 1, 1, 4, ],
                   height_ratios=[1.1, 1] * n_rows)
 
-    noise_components = None
-    if noise_components_file:
-        noise_components = np.loadtxt(noise_components_file,
-                                      dtype=int, delimiter=',', ndmin=1)
-
-    for i, img in enumerate(
-            iter_img(os.path.join(melodic_dir, "melodic_IC.nii.gz"))):
-
+    for i, img in enumerate(iter_img(weights_file)):
         col = i % 2
         row = int(i / 2)
         l_row = row * 2
@@ -561,15 +558,17 @@ def plot_melodic_components(melodic_dir, in_file, tr=None,
         color_time = current_palette[0]
         color_power = current_palette[1]
 
-        if noise_components is not None and noise_components.size > 0:
-            # If a noise components list is provided, assign red/green
-            color_title = color_time = color_power = (
-                'r' if (i + 1) in noise_components else 'g')
+        if comp_dict:
+            color_title = color_time = color_power = comp_dict.get(i, 'gray')
 
         data = img.get_data()
         for j in range(3):
             ax1 = fig.add_subplot(gs[l_row:l_row + 2, j + col * 5])
             sl = transform_to_2d(data, j)
+            print(j)
+            print(np.abs(sl).max())
+            sl /= np.std(sl)
+            print(np.abs(sl).max())
             m = np.abs(sl).max()
             ax1.imshow(sl, vmin=-m, vmax=+m, cmap=cm.cold_white_hot,
                        interpolation="nearest")
@@ -628,3 +627,29 @@ def plot_melodic_components(melodic_dir, in_file, tr=None,
 
     with open(out_file, 'w' if PY3 else 'wb') as f:
         f.write(image_svg)
+
+
+def plot_melodic_components(melodic_dir, in_file, tr=None,
+                            out_file='melodic_reportlet.svg',
+                            compress='auto', report_mask=None,
+                            noise_components_file=None):
+    ts_file = os.path.join(melodic_dir, "melodic_mix")
+    ft_file = os.path.join(melodic_dir, "melodic_FTmix")
+    stats_file = os.path.join(melodic_dir, "melodic_ICstats")
+    weights_file = os.path.join(melodic_dir, "melodic_IC.nii.gz")
+
+    comp_dict = {}
+    if noise_components_file:
+        noise_components = np.loadtxt(noise_components_file,
+                                      dtype=int, delimiter=',', ndmin=1)
+        for i in range(noise_components.size):
+            if i+1 in noise_components:
+                comp_dict[i] = 'r'
+            else:
+                comp_dict[i] = 'g'
+
+    plot_components(ts_file, ft_file, stats_file, weights_file, in_file,
+                    tr=tr,
+                    out_file=out_file,
+                    compress=compress, report_mask=report_mask,
+                    comp_dict=comp_dict)
