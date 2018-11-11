@@ -565,10 +565,7 @@ def plot_components(ts_file, ft_file, stats_file, weights_file, in_file,
         for j in range(3):
             ax1 = fig.add_subplot(gs[l_row:l_row + 2, j + col * 5])
             sl = transform_to_2d(data, j)
-            print(j)
-            print(np.abs(sl).max())
             sl /= np.std(sl)
-            print(np.abs(sl).max())
             m = np.abs(sl).max()
             ax1.imshow(sl, vmin=-m, vmax=+m, cmap=cm.cold_white_hot,
                        interpolation="nearest")
