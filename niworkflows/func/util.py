@@ -20,7 +20,7 @@ from ..interfaces.images import ValidateImage, MatchHeader
 from ..interfaces.masks import SimpleShowMaskRPT
 from ..interfaces.registration import EstimateReferenceImage
 from ..interfaces.utils import CopyXForm
-from ..utils.misc import pass_dummy_scans as _pass_dummy_scans
+from ..utils.misc import select_first, pass_dummy_scans as _pass_dummy_scans
 
 
 DEFAULT_MEMORY_MIN_GB = 0.01
@@ -118,6 +118,7 @@ using a custom methodology of *fMRIPrep*.
                 "ref_image_brain",
                 "bold_mask",
                 "validation_report",
+                "mask_report",
             ]
         ),
         name="outputnode",
@@ -127,7 +128,12 @@ using a custom methodology of *fMRIPrep*.
     if bold_file is not None:
         inputnode.inputs.bold_file = bold_file
 
-    validate = pe.Node(ValidateImage(), name="validate", mem_gb=DEFAULT_MEMORY_MIN_GB)
+    validate = pe.MapNode(
+        ValidateImage(),
+        name="validate",
+        mem_gb=DEFAULT_MEMORY_MIN_GB,
+        iterfield=["in_file"],
+    )
 
     gen_ref = pe.Node(
         EstimateReferenceImage(), name="gen_ref", mem_gb=1
@@ -156,7 +162,7 @@ using a custom methodology of *fMRIPrep*.
             ("ref_image", "inputnode.in_file"),
         ]),
         (validate, outputnode, [
-            ("out_file", "bold_file"),
+            (("out_file", select_first), "bold_file"),
             ("out_report", "validation_report"),
         ]),
         (gen_ref, calc_dummy_scans, [("n_volumes_to_discard", "algo_dummy_scans")]),
@@ -382,9 +388,7 @@ def init_enhance_and_skullstrip_bold_wf(
         )
         norm.inputs.fixed_image = str(bold_template)
         map_brainmask = pe.Node(
-            ApplyTransforms(
-                interpolation="MultiLabel", input_image=str(brain_mask)
-            ),
+            ApplyTransforms(interpolation="MultiLabel", input_image=str(brain_mask)),
             name="map_brainmask",
         )
         # fmt: off
