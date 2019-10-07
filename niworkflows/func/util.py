@@ -31,6 +31,7 @@ def init_bold_reference_wf(
     omp_nthreads,
     bold_file=None,
     pre_mask=False,
+    multiecho=False,
     name="bold_reference_wf",
     gen_report=False,
 ):
@@ -51,13 +52,16 @@ def init_bold_reference_wf(
 
     Parameters
     ----------
-    bold_file : str
+    bold_file : :obj:`str`
         BOLD series NIfTI file
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
-    name : str
+    multiecho : :obj:`bool`
+        If multiecho data was supplied, data from the first echo
+        will be selected
+    name : :obj:`str`
         Name of workflow (default: ``bold_reference_wf``)
-    gen_report : bool
+    gen_report : :obj:`bool`
         Whether a mask report node should be appended in the end
 
     Inputs
@@ -98,7 +102,13 @@ def init_bold_reference_wf(
 
     """
     workflow = Workflow(name=name)
-    workflow.__desc__ = """\
+    if multiecho:
+        workflow.__desc__ = """\
+First, a reference volume and its skull-stripped version were generated
+from the first echo using a custom methodology of *fMRIPrep*.
+"""
+    else:
+        workflow.__desc__ = """\
 First, a reference volume and its skull-stripped version were generated
 using a custom methodology of *fMRIPrep*.
 """
@@ -129,12 +139,17 @@ using a custom methodology of *fMRIPrep*.
     if bold_file is not None:
         inputnode.inputs.bold_file = bold_file
 
-    validate = pe.MapNode(
-        ValidateImage(),
-        name="validate",
-        mem_gb=DEFAULT_MEMORY_MIN_GB,
-        iterfield=["in_file"],
-    )
+    if multiecho:
+        validate = pe.MapNode(
+            ValidateImage(),
+            name="validate",
+            mem_gb=DEFAULT_MEMORY_MIN_GB,
+            iterfield=["in_file"],
+        )
+    else:
+        validate = pe.Node(
+            ValidateImage(), name="validate", mem_gb=DEFAULT_MEMORY_MIN_GB
+        )
 
     gen_ref = pe.Node(
         EstimateReferenceImage(), name="gen_ref", mem_gb=1
@@ -155,16 +170,11 @@ using a custom methodology of *fMRIPrep*.
         (inputnode, enhance_and_skullstrip_bold_wf, [
             ("bold_mask", "inputnode.pre_mask"),
         ]),
-        (inputnode, validate, [(("bold_file", ensure_list), "in_file")]),
         (inputnode, gen_ref, [("sbref_file", "sbref_file")]),
         (inputnode, calc_dummy_scans, [("dummy_scans", "dummy_scans")]),
         (validate, gen_ref, [("out_file", "in_file")]),
         (gen_ref, enhance_and_skullstrip_bold_wf, [
             ("ref_image", "inputnode.in_file"),
-        ]),
-        (validate, outputnode, [
-            (("out_file", select_first), "bold_file"),
-            ("out_report", "validation_report"),
         ]),
         (gen_ref, calc_dummy_scans, [("n_volumes_to_discard", "algo_dummy_scans")]),
         (calc_dummy_scans, outputnode, [("skip_vols_num", "skip_vols")]),
@@ -178,6 +188,19 @@ using a custom methodology of *fMRIPrep*.
             ("outputnode.skull_stripped_file", "ref_image_brain"),
         ]),
     ])
+
+    if multiecho:
+        workflow.connect([
+            (inputnode, validate, [(("bold_file", ensure_list), "in_file")]),
+            (validate, outputnode, [(("out_file", select_first), "bold_file"),
+                                    ("out_report", "validation_report")]),
+        ])
+    else:
+        workflow.connect([
+            (inputnode, validate, [("bold_file", "in_file")]),
+            (validate, outputnode, [("out_file", "bold_file"),
+                                    ("out_report", "validation_report")]),
+        ])
     # fmt: on
 
     if gen_report:
