@@ -32,7 +32,8 @@ from nipype.interfaces.base import (
 )
 from nipype.interfaces.mixins import reporting
 from nipype.interfaces import freesurfer as fs
-from nipype.interfaces import fsl, ants
+from nipype.interfaces import fsl
+from nipype.interfaces.ants import registration, resampling
 
 from ... import NIWORKFLOWS_LOG
 from . import base as nrb
@@ -78,17 +79,17 @@ class SpatialNormalizationRPT(nrb.RegistrationRC, SpatialNormalization):
             self._moving_image,
         )
 
-        return super(SpatialNormalizationRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _ANTSRegistrationInputSpecRPT(
-    nrb._SVGReportCapableInputSpec, ants.registration.RegistrationInputSpec
+    nrb._SVGReportCapableInputSpec, registration.RegistrationInputSpec
 ):
     pass
 
 
 class _ANTSRegistrationOutputSpecRPT(
-    reporting.ReportCapableOutputSpec, ants.registration.RegistrationOutputSpec
+    reporting.ReportCapableOutputSpec, registration.RegistrationOutputSpec
 ):
     pass
 
@@ -106,17 +107,17 @@ class ANTSRegistrationRPT(nrb.RegistrationRC, Registration):
             self._moving_image,
         )
 
-        return super(ANTSRegistrationRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _ANTSApplyTransformsInputSpecRPT(
-    nrb._SVGReportCapableInputSpec, ants.resampling.ApplyTransformsInputSpec
+    nrb._SVGReportCapableInputSpec, resampling.ApplyTransformsInputSpec
 ):
     pass
 
 
 class _ANTSApplyTransformsOutputSpecRPT(
-    reporting.ReportCapableOutputSpec, ants.resampling.ApplyTransformsOutputSpec
+    reporting.ReportCapableOutputSpec, resampling.ApplyTransformsOutputSpec
 ):
     pass
 
@@ -134,7 +135,7 @@ class ANTSApplyTransformsRPT(nrb.RegistrationRC, ApplyTransforms):
             self._moving_image,
         )
 
-        return super(ANTSApplyTransformsRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _ApplyTOPUPInputSpecRPT(
@@ -169,7 +170,7 @@ class ApplyTOPUPRPT(nrb.RegistrationRC, fsl.ApplyTOPUP):
             self._moving_image,
         )
 
-        return super(ApplyTOPUPRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _FUGUEInputSpecRPT(nrb._SVGReportCapableInputSpec, fsl.preprocess.FUGUEInputSpec):
@@ -198,7 +199,7 @@ class FUGUERPT(nrb.RegistrationRC, fsl.FUGUE):
             self._moving_image,
         )
 
-        return super(FUGUERPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _FLIRTInputSpecRPT(nrb._SVGReportCapableInputSpec, fsl.preprocess.FLIRTInputSpec):
@@ -225,7 +226,7 @@ class FLIRTRPT(nrb.RegistrationRC, fsl.FLIRT):
             self._moving_image,
         )
 
-        return super(FLIRTRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _ApplyXFMInputSpecRPT(
@@ -291,7 +292,7 @@ class BBRegisterRPT(nrb.RegistrationRC, fs.BBRegister):
             self._moving_image,
         )
 
-        return super(BBRegisterRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _MRICoregInputSpecRPT(
@@ -342,7 +343,7 @@ class MRICoregRPT(nrb.RegistrationRC, fs.MRICoreg):
             self._moving_image,
         )
 
-        return super(MRICoregRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _SimpleBeforeAfterInputSpecRPT(nrb._SVGReportCapableInputSpec):
@@ -373,7 +374,7 @@ class SimpleBeforeAfterRPT(nrb.RegistrationRC, nrb.ReportingInterface):
             self._moving_image,
         )
 
-        return super(SimpleBeforeAfterRPT, self)._post_run_hook(runtime)
+        return super()._post_run_hook(runtime)
 
 
 class _ResampleBeforeAfterInputSpecRPT(_SimpleBeforeAfterInputSpecRPT):
@@ -411,7 +412,7 @@ class ResampleBeforeAfterRPT(SimpleBeforeAfterRPT):
             self._moving_image,
         )
 
-        runtime = super(ResampleBeforeAfterRPT, self)._post_run_hook(runtime)
+        runtime = super()._post_run_hook(runtime)
         NIWORKFLOWS_LOG.info("Successfully created report (%s)", self._out_report)
         os.unlink(fname)
 

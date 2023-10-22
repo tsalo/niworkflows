@@ -1,3 +1,23 @@
+1.9.0 (October 12, 2023)
+========================
+New feature release in the 1.9.x series.
+
+This release should be mostly compatible with 1.8.x.
+The most significant addition is the :class:`niworkflows.data.Loader`,
+which provides some wrapping around :mod:`importlib.resources` to make
+accessing resources more convenient.
+
+* FIX: Build config and CI (#826)
+* FIX: Compatibility with matplotlib 3.8.0 (#825)
+* FIX: Save boldrefs as float32 (#821)
+* FIX: Replace deprecated Matplotlib functionality (#820)
+* FIX: Test names of paths when calling path.iterdir() (#818)
+* ENH: Add PET support to niworkflows (#823)
+* ENH: Add data loader class, install at root and data modules (#816)
+* MNT: Pyupgrade suggestions (#817)
+* MNT: update vendored docs files (#813)
+* CI: Bump actions/checkout from 3 to 4 (#824)
+
 1.8.1 (June 29, 2023)
 =====================
 Patch release in the 1.8.x series.
@@ -433,6 +453,16 @@ A list of prominent changes can be found below. (With thanks to Lea Waller for t
     * ``CopyXForm``, ``CopyHeader``, ``SanitizeImage`` now under ``header``
     * ``NormalizeMotionParams`` now under ``confounds``.
     * ``FMRISummary``, ``CompCorVariancePlot``, ``ConfoundsCorrelationPlot`` from ``plotting``
+
+1.3.10 (September 16, 2023)
+===========================
+Bug-fix release in the 1.3.x series.
+
+Minor maintenance.
+
+* FIX: Compatibility with matplotlib 3.8.0 (#825)
+* FIX: Remove unused ANTs parameter that was removed in 2.4.1 (#772)
+* MNT: Create a requirements.txt to keep the LTS branch buildable (#798)
 
 1.3.9 (December 21, 2022)
 =========================

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-#
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
 
@@ -111,7 +109,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -247,7 +245,7 @@ epub_exclude_files = ["search.html"]
 
 apidoc_module_dir = "../niworkflows"
 apidoc_output_dir = "api"
-apidoc_excluded_paths = ["conftest.py", "*/tests/*", "tests/*", "data/*", "testing.py"]
+apidoc_excluded_paths = ["conftest.py", "*/tests/*", "tests/*", "testing.py"]
 apidoc_separate_modules = True
 apidoc_extra_args = ["--module-first", "-d 1", "-T"]
 

@@ -24,7 +24,6 @@
 from os import path as op
 
 from multiprocessing import cpu_count
-import pkg_resources as pkgr
 from packaging.version import Version
 import numpy as np
 
@@ -40,6 +39,7 @@ from nipype.interfaces.base import (
 
 from templateflow.api import get as get_template
 from .. import NIWORKFLOWS_LOG, __version__
+from ..data import load as load_data
 from .fixes import FixHeaderRegistration as Registration
 
 
@@ -148,7 +148,7 @@ class SpatialNormalization(BaseInterface):
         self._reference_image = None
         self.retry = 1
         self.terminal_output = "file"
-        super(SpatialNormalization, self).__init__(**inputs)
+        super().__init__(**inputs)
 
     def _get_settings(self):
         """
@@ -166,16 +166,15 @@ class SpatialNormalization(BaseInterface):
             self.inputs.moving.lower(), self.inputs.flavor
         )
 
+        data_dir = load_data()
         # Get a list of settings files that match the flavor.
         filenames = [
-            i
-            for i in pkgr.resource_listdir("niworkflows", "data")
-            if i.startswith(filestart) and i.endswith(".json")
+            path.name
+            for path in data_dir.iterdir()
+            if path.name.startswith(filestart) and path.name.endswith(".json")
         ]
         # Return the settings files.
-        return [
-            pkgr.resource_filename("niworkflows.data", f) for f in sorted(filenames)
-        ]
+        return [str(data_dir / f) for f in sorted(filenames)]
 
     def _run_interface(self, runtime):
         # Get a list of settings files.

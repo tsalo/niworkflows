@@ -20,23 +20,15 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""
-These pipelines are developed by the Poldrack lab at Stanford University
-(https://nipreps.stanford.edu/) for use at the
-Center for Reproducible Neuroscience (https://reproducibility.stanford.edu/),
-as well as for open-source software distribution.
-"""
-from datetime import datetime
+from ..norm import SpatialNormalization
 
-__packagename__ = "niworkflows"
-__copyright__ = "Copyright {}, The NiPreps Developers".format(
-    datetime.now().year
-)
-__credits__ = [
-    "Oscar Esteban",
-    "Ross Blair",
-    "Shoshana L. Berleant",
-    "Christopher J. Markiewicz",
-    "Chris Gorgolewski",
-    "Russell A. Poldrack",
-]
+
+def test_get_settings():
+    norm = SpatialNormalization(moving='T1w', flavor='fast')
+    settings = norm._get_settings()
+    assert len(settings) == 1
+    assert settings[0].split('/')[-1] == 't1w-mni_registration_fast_000.json'
+
+    norm = SpatialNormalization(moving='T1w', flavor='testing')
+    settings = norm._get_settings()
+    assert len(settings) == 3

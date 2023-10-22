@@ -310,15 +310,6 @@ jobs:
             pipx run build
             pipx run twine check dist/*
       - run:
-          name: Validate version
-          command: |
-            THISVERSION=$( pipx run hatch version )
-            python -m pip install dist/*.tar.gz
-            mkdir empty
-            cd empty
-            INSTALLED=$( python -c 'import niworkflows; print(niworkflows.__version__)' )
-            test "${CIRCLE_TAG:-$THISVERSION}" == "$INSTALLED"
-      - run:
           name: Upload to PyPi
           command: |
             pipx run twine upload dist/*
@@ -341,8 +332,9 @@ jobs:
           name: Deploy to Docker Hub
           no_output_timeout: 40m
           command: |
+            docker tag niworkflows:latest nipreps/niworkflows:latest
+            docker tag niworkflows:latest nipreps/niworkflows:$CIRCLE_TAG
             docker push nipreps/niworkflows:latest
-            docker tag nipreps/niworkflows nipreps/niworkflows:$CIRCLE_TAG
             docker push nipreps/niworkflows:$CIRCLE_TAG
 
   build_docs:

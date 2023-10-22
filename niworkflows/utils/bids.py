@@ -42,7 +42,7 @@ class BIDSError(ValueError):
             message=message,
             footer="".join(["-"] * len(header)),
         )
-        super(BIDSError, self).__init__(self.msg)
+        super().__init__(self.msg)
         self.bids_root = bids_root
 
 
@@ -105,8 +105,9 @@ def collect_participants(
     if not all_participants:
         raise BIDSError(
             "Could not find participants. Please make sure the BIDS data "
-            "structure is present and correct. Datasets can be validated online "
-            "using the BIDS Validator (http://bids-standard.github.io/bids-validator/).\n"
+            "structure is present and correct. Datasets can be validated "
+            "online using the BIDS Validator "
+            "(https://bids-standard.github.io/bids-validator/).\n"
             "If you are using Docker for Mac or Docker for Windows, you "
             'may need to adjust your "File sharing" preferences.',
             bids_dir,
@@ -233,6 +234,7 @@ def collect_data(
         "t2w": {"datatype": "anat", "suffix": "T2w", "part": ["mag", None]},
         "t1w": {"datatype": "anat", "suffix": "T1w", "part": ["mag", None]},
         "roi": {"datatype": "anat", "suffix": "roi"},
+        "pet": {"suffix": "pet"}
     }
     bids_filters = bids_filters or {}
     for acq, entities in bids_filters.items():

@@ -27,7 +27,6 @@ from json import dumps, loads
 from pathlib import Path
 import shutil
 import os
-from pkg_resources import resource_filename as _pkgres
 import re
 
 import nibabel as nb
@@ -50,12 +49,13 @@ from nipype.interfaces.base import (
 )
 from nipype.interfaces.io import add_traits
 import templateflow as tf
+from .. import data
 from ..utils.bids import _init_layout, relative_to_root
 from ..utils.images import set_consumables, unsafe_write_nifti_header_and_data
 from ..utils.misc import _copy_any, unlink
 
 regz = re.compile(r"\.gz$")
-_pybids_spec = loads(Path(_pkgres("niworkflows", "data/nipreps.json")).read_text())
+_pybids_spec = loads(data.load.readable("nipreps.json").read_text())
 BIDS_DERIV_ENTITIES = _pybids_spec["entities"]
 BIDS_DERIV_PATTERNS = tuple(_pybids_spec["default_path_patterns"])
 
@@ -74,7 +74,7 @@ DEFAULT_DTYPES = defaultdict(
         ("mask", "uint8"),
         ("dseg", "int16"),
         ("probseg", "float32"),
-        ("boldref", "source"),
+        ("boldref", "float32"),
     ),
 )
 
@@ -225,6 +225,7 @@ class _BIDSDataGrabberOutputSpec(TraitedSpec):
     roi = OutputMultiObject(desc="output ROI images")
     t2w = OutputMultiObject(desc="output T2w images")
     flair = OutputMultiObject(desc="output FLAIR images")
+    pet = OutputMultiObject(desc="output PET images")
 
 
 class BIDSDataGrabber(SimpleInterface):
@@ -253,7 +254,7 @@ class BIDSDataGrabber(SimpleInterface):
     def __init__(self, *args, **kwargs):
         anat_only = kwargs.pop("anat_only")
         anat_derivatives = kwargs.pop("anat_derivatives", None)
-        super(BIDSDataGrabber, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if anat_only is not None:
             self._require_funcs = not anat_only
         self._require_t1w = anat_derivatives is None
@@ -276,7 +277,7 @@ class BIDSDataGrabber(SimpleInterface):
                 )
             )
 
-        for imtype in ["bold", "t2w", "flair", "fmap", "sbref", "roi"]:
+        for imtype in ["bold", "t2w", "flair", "fmap", "sbref", "roi", "pet"]:
             if not bids_dict[imtype]:
                 LOGGER.info(
                     'No "%s" images found for sub-%s', imtype, self.inputs.subject_id
@@ -820,12 +821,12 @@ class ReadSidecarJSON(SimpleInterface):
     def __init__(self, fields=None, undef_fields=False, **inputs):
         from bids.utils import listify
 
-        super(ReadSidecarJSON, self).__init__(**inputs)
+        super().__init__(**inputs)
         self._fields = listify(fields or [])
         self._undef_fields = undef_fields
 
     def _outputs(self):
-        base = super(ReadSidecarJSON, self)._outputs()
+        base = super()._outputs()
         if self._fields:
             base = add_traits(base, self._fields)
         return base
