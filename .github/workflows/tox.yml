@@ -38,7 +38,7 @@ jobs:
       run: pipx run build
     - name: Check distributions
       run: pipx run twine check dist/*
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"] #, "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         dependencies: [latest, pre]
         include:
           - python-version: "3.9"
@@ -115,7 +115,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v4
       - name: Load test data cache
         uses: actions/cache@v4
         id: stanford-crn
@@ -152,19 +152,27 @@ jobs:
         run: tox c
       - name: Run tox
         run: tox -v --exit-and-dump-after 1200
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
-          file: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
         if: ${{ always() }}
 
-  flake8:
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
+  checks:
+    runs-on: 'ubuntu-latest'
+    continue-on-error: true
+    strategy:
+      matrix:
+        check: ['style', 'spellcheck']
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3
-    - run: pipx run flake8 niworkflows/
+      - uses: actions/checkout@v4
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v4
+      - name: Install tox
+        run: uv tool install tox --with=tox-uv
+      - name: Show tox config
+        run: tox c
+      - name: Show tox config (this call)
+        run: tox c -e ${{ matrix.check }}
+      - name: Run check
+        run: tox -e ${{ matrix.check }}
