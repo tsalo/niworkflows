@@ -114,6 +114,7 @@ See https://sourceforge.net/p/advants/discussion/840261/thread/27216e69/#c7ba\
 """,
     )
     initial_moving_transform = File(exists=True, desc='transform for initialization')
+    use_histogram_matching = traits.Bool(desc='determine use of histogram matching')
     float = traits.Bool(False, usedefault=True, desc='use single precision calculations')
 
 
@@ -196,6 +197,15 @@ class SpatialNormalization(BaseInterface):
             NIWORKFLOWS_LOG.info('Loading settings from file %s.', ants_settings)
             # Configure an ANTs run based on these settings.
             self.norm = Registration(from_file=ants_settings, **ants_args)
+            if isdefined(self.inputs.use_histogram_matching):
+                # Most (all?) configuration files use histogram matching, so more important
+                # to allow disabling, such as in the case of intermodality normalization
+                NIWORKFLOWS_LOG.info(
+                    'Overriding (%sabling) histogram matching for file %s',
+                    'en' if self.inputs.use_histogram_matching else 'dis',
+                    ants_settings,
+                )
+                self.norm.inputs.use_histogram_matching = self.inputs.use_histogram_matching
             self.norm.resource_monitor = False
             self.norm.terminal_output = self.terminal_output
 
@@ -212,7 +222,7 @@ class SpatialNormalization(BaseInterface):
             if interface_result.runtime.returncode != 0:
                 NIWORKFLOWS_LOG.warning('Retry #%d failed.', self.retry)
                 # Save outputs (if available)
-                term_out = _write_outputs(interface_result.runtime, '.nipype-%04d' % self.retry)
+                term_out = _write_outputs(interface_result.runtime, f'.nipype-{self.retry:04d}')
                 if term_out:
                     NIWORKFLOWS_LOG.warning('Log of failed retry saved (%s).', ', '.join(term_out))
             else:
@@ -225,9 +235,7 @@ class SpatialNormalization(BaseInterface):
             self.retry += 1
 
         # If all tries fail, raise an error.
-        raise RuntimeError(
-            'Robust spatial normalization failed after %d retries.' % (self.retry - 1)
-        )
+        raise RuntimeError(f'Robust spatial normalization failed after {self.retry - 1} retries.')
 
     def _get_ants_args(self):
         args = {
