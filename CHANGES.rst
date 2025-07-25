@@ -1,3 +1,49 @@
+1.13.5 (June 19, 2025)
+======================
+Patch release in the 1.13.x series.
+
+* FIX: Allow optional/None filters to be overridden (#956)
+
+1.13.4 (June 05, 2025)
+======================
+Patch release in the 1.13.x series.
+
+This release includes:
+- A fix to avoid filters overwriting BIDS subject and session entities when collecting data
+- Additional PET paths for the default BIDS configuration
+- New file with PET-specific registration options
+
+* ENH: Update nipreps.json (#950)
+* ENH: Add petref-mni_registration_precise_000.json (#949)
+* FIX: Do not allow filters to overwrite participant / session (#952)
+* MNT: Fix coverage config for parallel runners (#945)
+* MNT: Accept main where master is used (#943)
+
+1.13.3 (May 09, 2025)
+=====================
+Patch release in the 1.13.x series.
+
+This release resolves import errors introduced by excluding excess files in
+the previous release. Only test modules were affected.
+
+* ENH: Add PET info to nipreps.json (#942)
+
+1.13.2 (May 08, 2025)
+=====================
+Patch release in the 1.13.x series.
+
+This release adjusts the build process to reduce the size of the installed package.
+
+1.13.1 (May 02, 2025)
+=====================
+Patch release in the 1.13.x series.
+
+This release adds the ``niworkflows.engine.splicer`` module, to facilitate sugery on workflows.
+
+* FIX: Allow passing arguments through tag decorator (#939)
+* ENH: Workflow splicer module (#938)
+* MNT: Bump astral-sh/setup-uv from 5 to 6 (#937)
+
 1.13.0 (March 20, 2025)
 =======================
 New feature release in the 1.13.x series.

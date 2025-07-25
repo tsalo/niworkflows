@@ -55,6 +55,7 @@ jobs:
             - build-v1--{{ .Revision }}
             - build-v1-{{ .Branch }}-
             - build-v1-master-
+            - build-v1-main-
             - build-v1-
           paths:
             - /tmp/docker
@@ -120,32 +121,28 @@ jobs:
 
   get_data:
     docker:
-      - image: quay.io/condaforge/miniforge3:24.9.0-0
+      - image: quay.io/condaforge/miniforge3:latest
     working_directory: /tmp/data
     environment:
       - TEMPLATEFLOW_HOME: /tmp/templateflow
     steps:
-      - restore_cache:
-          keys:
-            - env-v0-{{ .Branch }}-
-            - env-v0-master-
-            - env-v0-
       - run:
-          name: Setup git-annex, DataLad & TemplateFlow
+          name: Add ~/.local/bin to path
           command: |
-            mamba install -y python=*=*cpython git-annex=*=alldep* unzip
-            python -m pip install --no-cache-dir -U datalad datalad-osf templateflow
+            echo export PATH=$HOME/.local/bin:$PATH >> $BASH_ENV
+      - run:
+          name: Setup git-annex and DataLad
+          command: |
+            mamba install -y git-annex=*=alldep* unzip uv
+            uv tool install --with=datalad-next --with=datalad-osf datalad
             git config --global user.name 'NiPreps Bot'
             git config --global user.email 'nipreps@gmail.com'
-      - save_cache:
-          key: env-v0-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - /opt/conda
 
       - restore_cache:
           keys:
             - data-v3-{{ .Branch }}-
             - data-v3-master-
+            - data-v3-main-
             - data-v3-
       - run:
           name: Get test data from ds000003
@@ -216,6 +213,7 @@ jobs:
           keys:
             - data-v3-{{ .Branch }}-
             - data-v3-master-
+            - data-v3-main-
 
       - run:
           name: Run unit tests

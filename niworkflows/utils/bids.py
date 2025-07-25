@@ -22,6 +22,7 @@
 #
 """Helpers for handling BIDS-like neuroimaging structures."""
 
+import copy
 import json
 import re
 import warnings
@@ -29,10 +30,15 @@ from pathlib import Path
 
 from bids import BIDSLayout
 from bids.layout import Query
+from bids.utils import listify
 from packaging.version import Version
 
 DEFAULT_BIDS_QUERIES = {
-    'bold': {'datatype': 'func', 'suffix': 'bold', 'part': ['mag', None]},
+    'bold': {
+        'datatype': 'func',
+        'suffix': 'bold',
+        'part': ['mag', None],
+    },
     'dwi': {'suffix': 'dwi'},
     'flair': {'datatype': 'anat', 'suffix': 'FLAIR', 'part': ['mag', None]},
     'fmap': {'datatype': 'fmap'},
@@ -226,22 +232,54 @@ def collect_data(
     >>> bids_root['t1w']  # doctest: +ELLIPSIS
     ['.../ds051/sub-01/anat/sub-01_run-01_T1w.nii.gz']
 
+    >>> bids_root, _ = collect_data(
+    ...     str(datadir / 'ds114'),
+    ...     '01',
+    ...     bids_validate=False,
+    ...     session_id='retest',
+    ...     bids_filters={'bold': {'session': 'madeup'}})  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+      ...
+    ValueError: Conflicting entities for "session" found: madeup // retest
+
+    >>> bids_root, _ = collect_data(
+    ...     str(datadir / 'ds114'),
+    ...     '01',
+    ...     bids_validate=False,
+    ...     session_id=None,
+    ...     bids_filters={'t1w': {'session': 'retest'}})
+    >>> bids_root['t1w']  # doctest: +ELLIPSIS
+    ['.../ds114/sub-01/ses-retest/anat/sub-01_ses-retest_T1w.nii.gz']
     """
     if isinstance(bids_dir, BIDSLayout):
         layout = bids_dir
     else:
         layout = BIDSLayout(str(bids_dir), validate=bids_validate)
 
+    if not queries:
+        queries = copy.deepcopy(DEFAULT_BIDS_QUERIES)
+
+    session_id = session_id or Query.OPTIONAL
     layout_get_kwargs = {
         'return_type': 'file',
         'subject': participant_label,
         'extension': ['.nii', '.nii.gz'],
-        'session': session_id or Query.OPTIONAL,
+        'session': session_id,
     }
 
-    queries = queries or DEFAULT_BIDS_QUERIES
+    reserved_entities = [('subject', participant_label), ('session', session_id)]
+
     bids_filters = bids_filters or {}
     for acq, entities in bids_filters.items():
+        # BIDS filters will not be able to override subject / session entities
+        for entity, param in reserved_entities:
+            if param == Query.OPTIONAL:
+                continue
+            if entity in entities and listify(param) != listify(entities[entity]):
+                raise ValueError(
+                    f'Conflicting entities for "{entity}" found: {entities[entity]} // {param}'
+                )
+
         queries[acq].update(entities)
         for entity in list(layout_get_kwargs.keys()):
             if entity in entities:
@@ -249,7 +287,7 @@ def collect_data(
                 del layout_get_kwargs[entity]
 
     if task:
-        queries['bold']['task'] = task
+        queries['bold']['task'] = queries['pet']['task'] = task
 
     if echo:
         queries['bold']['echo'] = echo
