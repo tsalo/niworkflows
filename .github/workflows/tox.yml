@@ -25,11 +25,11 @@ jobs:
     if: github.repository == 'nipreps/niworkflows'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - name: Set up Python 3
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: 3
     - name: Display Python version
@@ -94,28 +94,28 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         dependencies: [latest, pre]
         include:
-          - python-version: "3.9"
+          - python-version: "3.10"
             dependencies: min
         exclude:
           # Do not test pre-releases for versions out of SPEC0
-          - python-version: "3.9"
-            dependencies: pre
           - python-version: "3.10"
+            dependencies: pre
+          - python-version: "3.11"
             dependencies: pre
 
     env:
       DEPENDS: ${{ matrix.dependencies }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 0
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Load test data cache
         uses: actions/cache@v4
         id: stanford-crn
@@ -131,7 +131,7 @@ jobs:
           sudo apt update
           sudo apt install -y --no-install-recommends graphviz
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
@@ -156,9 +156,9 @@ jobs:
         check: ['style', 'spellcheck']
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Install tox
         run: uv tool install tox --with=tox-uv
       - name: Show tox config

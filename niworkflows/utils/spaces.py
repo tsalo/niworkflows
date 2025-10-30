@@ -41,6 +41,7 @@ NONSTANDARD_REFERENCES = [
     'individual',
     'dwi',
     'asl',
+    'petref',
 ]
 """List of supported nonstandard reference spaces."""
 
@@ -804,4 +805,4 @@ def _expand_entities(entities):
     """
     keys = list(entities.keys())
     values = list(product(*[entities[k] for k in keys]))
-    return [dict(zip(keys, combs)) for combs in values]
+    return [dict(zip(keys, combs, strict=False)) for combs in values]

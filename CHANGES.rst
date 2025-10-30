@@ -1,3 +1,31 @@
+1.14.2 (September 26, 2025)
+===========================
+Patch release in the 1.14.x series.
+
+This release updates the config file used for generating derivative filenames.
+
+* FIX: Replace 'ref' entity with 'label' entity according to BIDS specification (#976)
+* ENH: Add fmap mask path to path patterns (#977)
+* ENH: Add 'label' entity to anatomical masks in nipreps.json (#973)
+
+1.14.1 (September 16, 2025)
+===========================
+Patch release in the 1.14.x series.
+
+* FIX: Add task entity to PET path patterns (#970)
+* ENH: Add optional hash entity to path patterns (#966)
+
+1.14.0 (August 19, 2025)
+========================
+New feature release in the 1.13.x series.
+
+* FIX: Address failures from nilearn/matplotlib (#960)
+* FIX: Loosen session error on mismatch (#956)
+* ENH: Sync PETPrep requirements (#965)
+* ENH: Add filename pattern for label.gii masks (#962)
+* ENH: Toggle requirement for any image type BIDSDataGrabber, add task filtering when collecting PET data (#951)
+* MNT: Install datalad-osf, git-annex from PyPI (#961)
+
 1.13.5 (June 19, 2025)
 ======================
 Patch release in the 1.13.x series.
