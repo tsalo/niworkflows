@@ -569,6 +569,42 @@ def reorient_image(img: nb.spatialimages.SpatialImage, target_ornt: str):
     return r_img
 
 
+def calculate_target_affine(base_img, target_resolution):
+    """Calculate the target affine and shape for a given base image and target resolution.
+
+    Parameters
+    ----------
+    base_img : nibabel.SpatialImage
+        The base image to calculate the target affine and shape for.
+    target_resolution : tuple of 3 floats
+        The target resolution to calculate the target affine and shape for.
+
+    Returns
+    -------
+    new_affine : 4x4 numpy.ndarray
+        The target affine.
+    new_shape : tuple of 3 ints
+        The target shape.
+    """
+    import numpy as np
+
+    if len(target_resolution) != 3:
+        raise ValueError('target_resolution must be a tuple of 3 floats')
+
+    # determine appropriate shape
+    zooms = np.array(base_img.header.get_zooms())[:3]
+    ratios = zooms / np.array(target_resolution)
+    new_shape = np.array(base_img.shape) * ratios
+    new_shape = tuple(np.round(new_shape).astype(int))
+
+    # patch in voxel sizes to affine
+    new_affine = base_img.affine.copy()
+    for i in range(3):
+        new_affine[i, i] = target_resolution[i]
+
+    return new_affine, new_shape
+
+
 def _gen_reference(
     fixed_image,
     moving_image,
@@ -589,8 +625,7 @@ def _gen_reference(
     reoriented_moving_img = nb.as_closest_canonical(nb.load(moving_image))
 
     if target_resolution is not None:
-        new_zooms = np.array(target_resolution)
-        new_affine = np.diag(new_zooms)
+        new_affine, new_shape = calculate_target_affine(reoriented_moving_img, target_resolution)
     else:
         new_zooms = reoriented_moving_img.header.get_zooms()[:3]
 
@@ -598,8 +633,14 @@ def _gen_reference(
         # FOV. See https://github.com/nipreps/fmriprep/issues/512
         # A positive diagonal affine is RAS, hence the need to reorient above.
         new_affine = np.diag(np.round(new_zooms, 3))
+        new_shape = fixed_image.shape[:3]
 
-    resampled = nli.resample_img(fixed_image, target_affine=new_affine, interpolation='nearest')
+    resampled = nli.resample_img(
+        fixed_image,
+        target_affine=new_affine,
+        target_shape=new_shape,
+        interpolation='nearest',
+    )
 
     if fov_mask is not None:
         # If we have a mask, resample again dropping (empty) samples
