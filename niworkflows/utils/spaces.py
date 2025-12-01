@@ -709,12 +709,9 @@ class OutputReferencesAction(argparse.Action):
             # option was called without any output spaces, so user does not want outputs
             spaces.checkpoint()
 
-        invalid_spaces = []
         for val in values:
             val = val.rstrip(':')
             space = val.split(':', 1)[0]
-            if space in NONSTANDARD_REFERENCES and ':' in val:
-                invalid_spaces.append(val)
 
             if (
                 space not in NONSTANDARD_REFERENCES
@@ -730,12 +727,6 @@ class OutputReferencesAction(argparse.Action):
 
             for sp in Reference.from_string(val):
                 spaces.add(sp)
-
-        if invalid_spaces:
-            raise ValueError(
-                'Modifiers are not allowed for nonstandard spaces. '
-                f'Invalid space(s): {", ".join(invalid_spaces)}'
-            )
 
         setattr(namespace, self.dest, spaces)
 

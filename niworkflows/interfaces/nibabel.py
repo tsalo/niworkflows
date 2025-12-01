@@ -577,6 +577,7 @@ def _gen_reference(
     message=None,
     force_xform_code=None,
     newpath=None,
+    target_resolution=None,
 ):
     """Generate a sampling reference, and makes sure xform matrices/codes are correct."""
     import nilearn.image as nli
@@ -586,12 +587,17 @@ def _gen_reference(
 
     # Moving images may not be RAS/LPS (more generally, transverse-longitudinal-axial)
     reoriented_moving_img = nb.as_closest_canonical(nb.load(moving_image))
-    new_zooms = reoriented_moving_img.header.get_zooms()[:3]
 
-    # Avoid small differences in reported resolution to cause changes to
-    # FOV. See https://github.com/nipreps/fmriprep/issues/512
-    # A positive diagonal affine is RAS, hence the need to reorient above.
-    new_affine = np.diag(np.round(new_zooms, 3))
+    if target_resolution is not None:
+        new_zooms = np.array(target_resolution)
+        new_affine = np.diag(new_zooms)
+    else:
+        new_zooms = reoriented_moving_img.header.get_zooms()[:3]
+
+        # Avoid small differences in reported resolution to cause changes to
+        # FOV. See https://github.com/nipreps/fmriprep/issues/512
+        # A positive diagonal affine is RAS, hence the need to reorient above.
+        new_affine = np.diag(np.round(new_zooms, 3))
 
     resampled = nli.resample_img(fixed_image, target_affine=new_affine, interpolation='nearest')
 
