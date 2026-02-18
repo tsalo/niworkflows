@@ -1,3 +1,17 @@
+1.14.4 (January 13, 2026)
+=========================
+Patch release in the 1.14.x series.
+
+* FIX: Raise exception on nonstandard spaces with res entity (#996)
+
+1.14.3 (October 20, 2025)
+=========================
+Patch release in the 1.14.x series.
+
+This release restores compatibility with the upcoming NumPy 2.4 series.
+
+* FIX: Import LinAlgError from a stable location (#987)
+
 1.14.2 (September 26, 2025)
 ===========================
 Patch release in the 1.14.x series.
